@@ -1,0 +1,39 @@
+{
+  "name": "@rob3000/nestjs-kafka",
+  "version": "0.0.1",
+  "description": "KafkaJS integration with NestJS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepare": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rob3000/nestjs-kafka.git"
+  },
+  "keywords": [
+    "nestjs",
+    "kafkajs"
+  ],
+  "author": "Rob Shepherd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rob3000/nestjs-kafka/issues"
+  },
+  "homepage": "https://github.com/rob3000/nestjs-kafka#readme",
+  "dependencies": {
+    "@nestjs/common": "^7.4.4",
+    "@nestjs/core": "^7.4.4",
+    "@nestjs/microservices": "^7.4.4",
+    "avsc": "^5.4.22",
+    "axios": "^0.20.0",
+    "cache-manager": "^3.4.0",
+    "kafkajs": "^1.13.0",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^6.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^14.10.1",
+    "typescript": "^4.0.2"
+  }
+}
