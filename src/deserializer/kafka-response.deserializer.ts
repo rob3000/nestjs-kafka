@@ -5,7 +5,6 @@ export class KafkaResponseDeserializer
   implements Deserializer<any, KafkaResponse> {
 
   deserialize(message: any, options?: Record<string, any>): KafkaResponse {
-    console.log('deserialize', message);
     const { key, value, timestamp, offset } = message;
     let id = key;
     let response = value;

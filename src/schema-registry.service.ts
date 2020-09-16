@@ -28,7 +28,7 @@ export class SchemaRegistryService implements OnModuleInit {
   @UseInterceptors(CacheInterceptor)
   private async fetchSchema(topic: string, version?: number): Promise<{topic: string, schema: any}> {
     let schemaVersion = version;
-    console.log(version)
+
     if (!version) {
       schemaVersion = await this.getSchemaVersion(topic);
     }
@@ -37,13 +37,10 @@ export class SchemaRegistryService implements OnModuleInit {
 
     let schema = [];
 
-    console.log('fetchSchema', result.data);
-
     if (result.data.fields) {
       schema = result.data.fields
     }
 
-    // Setting to then load later..
     SCHEMAS.set(topic, schema);
 
     return SCHEMAS.get(topic);

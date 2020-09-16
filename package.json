@@ -1,6 +1,6 @@
 {
   "name": "@rob3000/nestjs-kafka",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "KafkaJS integration with NestJS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
