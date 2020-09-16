@@ -26,13 +26,13 @@ export class SchemaRegistryService implements OnModuleInit {
 
   @CacheTTL(3600)
   @UseInterceptors(CacheInterceptor)
-  private async fetchSchema(topic: string, version?: number): Promise<{topic: string, schema: any}> {
+  private async fetchSchema(topic: string, version?: number): Promise<any> {
     let schemaVersion = version;
 
     if (!version) {
       schemaVersion = await this.getSchemaVersion(topic);
     }
-    
+
     const result = await this.httpService.get(`${this.options.url}/subjects/${topic}-value/versions/${schemaVersion}/schema`).toPromise();
 
     let schema = [];

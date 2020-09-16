@@ -168,3 +168,5 @@ get the latest schema.
 ## TODO
 
 * Tests
+* Add Avro schema to outgoing messages.
+* Get avro schema for key, as we are only getting the value.
