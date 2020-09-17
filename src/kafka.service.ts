@@ -1,8 +1,8 @@
-import { Injectable, OnModuleDestroy, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
-import { Consumer, Kafka, Producer, ProducerRecord } from 'kafkajs';
+import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Consumer, Kafka, Producer, ProducerRecord, RecordMetadata } from "kafkajs";
 import { Deserializer, Serializer } from "@nestjs/microservices";
-import { Logger } from '@nestjs/common/services/logger.service';
-import { KafkaLogger } from '@nestjs/microservices/helpers/kafka-logger';
+import { Logger } from "@nestjs/common/services/logger.service";
+import { KafkaLogger } from "@nestjs/microservices/helpers/kafka-logger";
 import { KafkaResponseDeserializer } from "./deserializer/kafka-response.deserializer";
 import { KafkaRequestSerializer } from "./serializer/kafka-request.serializer";
 import { KafkaModuleOption } from "./interfaces";
@@ -41,7 +41,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     const { groupId } = consumerConfig;
     const consumerOptions = Object.assign(
       {
-        groupId: groupId + '-client',
+        groupId: this.getGroupIdSuffix(groupId),
       },
       consumerConfig
     );
@@ -57,22 +57,36 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     await this.connect();
     SUBSCRIBER_MAP.forEach((functionRef, topic) => {
-      this.bindAllTopicToConsumer(functionRef, topic);
+      this.subscribe(topic);
     });
+
+    this.bindAllTopicToConsumer();
   }
 
   async onModuleDestroy(): Promise<void> {
     await this.disconnect();
   }
 
-  async connect() {
+  async connect(): Promise<void> {
     await this.producer.connect()
     await this.consumer.connect();
   }
 
-  async disconnect() {
+  async disconnect(): Promise<void> {
     await this.producer.disconnect();
     await this.consumer.disconnect();
+  }
+
+  /**
+   * Subscribes to the topics.
+   * 
+   * @param topic 
+   */
+  private async subscribe(topic: string): Promise<void> {
+    await this.consumer.subscribe({
+      topic,
+      fromBeginning: this.options.consumeFromBeginning || false
+    });
   }
   
   /**
@@ -80,7 +94,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * 
    * @param message 
    */
-  async send(message: ProducerRecord) {
+  async send(message: ProducerRecord): Promise<RecordMetadata[]> {
     if (!this.producer) {
       this.logger.error('There is no producer, unable to send message.')
       return;
@@ -94,6 +108,15 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Gets the groupId suffix for the consumer.
+   * 
+   * @param groupId 
+   */
+  public getGroupIdSuffix(groupId: string): string {
+    return groupId + '-client';
+  }
+
+  /**
    * Calls the method you are subscribed to.
    * 
    * @param topic
@@ -101,7 +124,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * @param instance 
    *  The class instance.
    */
-  subscribeToResponseOf(topic: string, instance: object) {
+  subscribeToResponseOf(topic: string, instance: object): void {
     SUBSCRIBER_OBJECT_MAP.set(topic, instance);
   }
 
@@ -124,16 +147,13 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Binds the consumer classes to accept incoming messages.
-   * 
-   * @param callback 
-   * @param _topic 
+   * Runs the consumer and calls the consumers when a message arrives.
    */
-  private async bindAllTopicToConsumer(callback, _topic) {
-    await this.consumer.subscribe({ topic: _topic, fromBeginning: this.options.consumeFromBeginning || false });
+  private bindAllTopicToConsumer(): void {
     this.consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         const objectRef = SUBSCRIBER_OBJECT_MAP.get(topic);
+        const callback = SUBSCRIBER_MAP.get(topic);
 
         const { timestamp, response, offset, id } = this.deserializer.deserialize(message, { topic });
 
