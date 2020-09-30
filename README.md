@@ -109,7 +109,7 @@ export class Producer {
 ### Schema Registry support.
 
 By default messages are converted to JSON objects were possible. If you're using
-AVRO you can add the `SchemaRegistry` module to parse the messages.
+AVRO you can add the `SchemaRegistry` deserializer to convert the messages. This uses the [KafkaJS Schema-registry module](https://github.com/kafkajs/confluent-schema-registry)
 
 In your `module.ts`:
 
@@ -129,41 +129,16 @@ In your `module.ts`:
             groupId: 'hero-consumer'
           }
         },
-        deserializer: new KafkaAvroResponseDeserializer()
+        deserializer: new KafkaAvroResponseDeserializer({
+          host: 'http://localhost:8081'
+        })
       },
     ]),
-    SchemaRegistry.register({
-      url: 'http://localhost:8081'
-    }),
   ]
   ...
 })
 ```
 
-In your `controller.ts`:
-
-```javascript
-export class Consumer {
-  constructor(
-    @Inject('HERO_SERVICE') private client: KafkaService
-  ) {}
-
-  onModuleInit(): void {
-    this.client.subscribeToResponseOf('hero.kill.dragon', this)
-  }
-
-  @SubscribeTo('hero.kill.dragon')
-  @AvroSchema('hero.kill.dragon', 1)
-  async getWorld(@Payload() data: KafkaMessage): Promise<void> {
-    ...
-  }
-
-}
-
-```
-
-The `AvroSchema` decorator accepts a version number or undefined, this is to either pull an exact version from the schema registry, or always
-get the latest schema.
 
 ## TODO
 

@@ -124,7 +124,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * @param instance 
    *  The class instance.
    */
-  subscribeToResponseOf(topic: string, instance: object): void {
+  subscribeToResponseOf<T>(topic: string, instance: T): void {
     SUBSCRIBER_OBJECT_MAP.set(topic, instance);
   }
 
@@ -155,12 +155,12 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         const objectRef = SUBSCRIBER_OBJECT_MAP.get(topic);
         const callback = SUBSCRIBER_MAP.get(topic);
 
-        const { timestamp, response, offset, id } = this.deserializer.deserialize(message, { topic });
+        const { timestamp, response, offset, id } = await this.deserializer.deserialize(message, { topic });
 
         try {
           await callback.apply(objectRef, [response, id, offset, timestamp, partition]);
         } catch(e) {
-          this.logger.error(e);
+          this.logger.error(`Error for message ${topic}: ${e}`);
         }
       },
     });

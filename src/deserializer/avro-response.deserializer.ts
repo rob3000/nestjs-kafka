@@ -1,18 +1,21 @@
 import { Deserializer } from "@nestjs/microservices";
 import { Logger } from '@nestjs/common/services/logger.service';
 import { KafkaResponse } from "../interfaces";
-import { SCHEMAS } from "../kafka.decorator";
-import * as avro from "avsc";
+import { SchemaRegistry } from "@kafkajs/confluent-schema-registry";
+import { SchemaRegistryAPIClientArgs } from "@kafkajs/confluent-schema-registry/dist/api"
 
 export class KafkaAvroResponseDeserializer
-  implements Deserializer<any, KafkaResponse> {
+  implements Deserializer<any, Promise<KafkaResponse>> {
 
+    protected registry: SchemaRegistry;
     protected logger = new Logger(KafkaAvroResponseDeserializer.name);
 
-    deserialize(message: any, options?: Record<string, any>): KafkaResponse {
-      const { topic } = options;
+    constructor(config: SchemaRegistryAPIClientArgs) {
+      this.registry = new SchemaRegistry(config);
+    }
+
+    async deserialize(message: any, options?: Record<string, any>): Promise<KafkaResponse> {
       const { value, id, timestamp, offset } = message;
-      const schema = SCHEMAS.get(topic);
 
       const decodeResponse = {
         response: value,
@@ -21,19 +24,11 @@ export class KafkaAvroResponseDeserializer
         offset,
       }
 
-      if (!schema) {
-        this.logger.error(`Unable to find schema for: ${topic}`);
-        return decodeResponse;
-      }
-
-      const type = avro.Type.forSchema({
-        type: "record",
-        name: topic,
-        fields: schema,
-      });
-      
-      if (value && Buffer.isBuffer(value)) {
-        decodeResponse.response = type.fromBuffer(value.slice(5));
+      try {
+        decodeResponse.id = await this.registry.decode(message.key);
+        decodeResponse.response = await this.registry.decode(message.value);
+      } catch (e) {
+        this.logger.error(e);
       }
 
       return decodeResponse;

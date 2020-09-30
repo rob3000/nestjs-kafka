@@ -20,7 +20,3 @@ export interface KafkaModuleOption {
     seek?: Record<string, string>
   }
 }
-
-export interface SchemaRegistryOption {
-  url: string;
-}
