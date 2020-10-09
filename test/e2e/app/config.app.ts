@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { KafkaModule, KafkaAvroResponseDeserializer, KafkaAvroMessageSerializer } from "../../../src";
+import { KafkaModule, KafkaAvroResponseDeserializer } from "../../../src";
 import { TestConsumer } from "./test.controller";
 
 @Module({
@@ -22,14 +22,6 @@ import { TestConsumer } from "./test.controller";
           deserializer: new KafkaAvroResponseDeserializer({
             host: 'http://localhost:8081/'
           }),
-          // serializer: new KafkaAvroMessageSerializer({
-          //   config: {
-          //     host: 'http://localhost:8081/'
-          //   },
-          //   schemas: [
-          //     './schema.avsc'
-          //   ]
-          // }),
           consumeFromBeginning: true
         }
       },

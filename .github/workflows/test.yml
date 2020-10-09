@@ -20,7 +20,7 @@ jobs:
     - run: npm install
     - name: Start Docker containers for Zookeeper, Kafka and Schema Registry
       run: npm run kafka:start
-    - run: sleep 60
-    - run: npm test
+    - run: sleep 120
+    - run: npm run test:e2e
       env:
         CI: true
