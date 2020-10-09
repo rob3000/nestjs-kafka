@@ -18,6 +18,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
+    - name: Start Docker containers for Zookeeper, Kafka and Schema Registry
+      run: npm run kafka:start
+    - run: sleep 60
     - run: npm test
       env:
         CI: true

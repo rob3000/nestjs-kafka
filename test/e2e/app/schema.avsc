@@ -1,0 +1,39 @@
+{
+  "name": "Value",
+  "namespace": "test.topic",
+  "type": "record",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "metadataId",
+      "type": "int"
+    },
+    {
+      "name": "objectId",
+      "type": "int"
+    },
+    {
+      "name": "value",
+      "type": "string"
+    },
+    {
+      "default": null,
+      "name": "__table",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "default": null,
+      "name": "__deleted",
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  ],
+}
