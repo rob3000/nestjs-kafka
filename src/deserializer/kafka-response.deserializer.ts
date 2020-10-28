@@ -18,7 +18,7 @@ export class KafkaResponseDeserializer
       }
 
       return {
-        id,
+        key: id,
         response,
         timestamp,
         offset

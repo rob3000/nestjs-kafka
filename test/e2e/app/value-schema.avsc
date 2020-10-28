@@ -16,7 +16,11 @@
       "type": "int"
     },
     {
-      "name": "value",
+      "name": "firstName",
+      "type": "string"
+    },
+    {
+      "name": "lastName",
       "type": "string"
     },
     {
@@ -35,5 +39,5 @@
         "string"
       ]
     }
-  ],
+  ]
 }

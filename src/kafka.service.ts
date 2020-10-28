@@ -1,11 +1,11 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { Consumer, Kafka, Producer, ProducerRecord, RecordMetadata } from "kafkajs";
+import { Consumer, Kafka, Producer, RecordMetadata } from "kafkajs";
 import { Deserializer, Serializer } from "@nestjs/microservices";
 import { Logger } from "@nestjs/common/services/logger.service";
 import { KafkaLogger } from "@nestjs/microservices/helpers/kafka-logger";
 import { KafkaResponseDeserializer } from "./deserializer/kafka-response.deserializer";
 import { KafkaRequestSerializer } from "./serializer/kafka-request.serializer";
-import { KafkaModuleOption } from "./interfaces";
+import { KafkaModuleOption, KafkaMessageSend } from "./interfaces";
 
 import {
   SUBSCRIBER_MAP,
@@ -59,7 +59,6 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     SUBSCRIBER_MAP.forEach((functionRef, topic) => {
       this.subscribe(topic);
     });
-
     this.bindAllTopicToConsumer();
   }
 
@@ -94,17 +93,17 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * 
    * @param message 
    */
-  async send(message: ProducerRecord): Promise<RecordMetadata[]> {
+  async send(message: KafkaMessageSend): Promise<RecordMetadata[]> {
     if (!this.producer) {
       this.logger.error('There is no producer, unable to send message.')
       return;
     }
 
-    message.messages = message.messages.map((messageValue) => this.serializer.serialize(messageValue))
+    const serializedPacket = await this.serializer.serialize(message);
 
     // @todo - rather than have a producerRecord, 
     // most of this can be done when we create the controller.
-    return this.producer.send(message);
+    return this.producer.send(serializedPacket);
   }
 
   /**
@@ -155,10 +154,9 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         const objectRef = SUBSCRIBER_OBJECT_MAP.get(topic);
         const callback = SUBSCRIBER_MAP.get(topic);
 
-        const { timestamp, response, offset, id } = await this.deserializer.deserialize(message, { topic });
-
         try {
-          await callback.apply(objectRef, [response, id, offset, timestamp, partition]);
+          const { timestamp, response, offset, key } = await this.deserializer.deserialize(message, { topic });
+          await callback.apply(objectRef, [response, key, offset, timestamp, partition]);
         } catch(e) {
           this.logger.error(`Error for message ${topic}: ${e}`);
         }

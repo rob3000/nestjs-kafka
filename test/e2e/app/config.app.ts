@@ -1,6 +1,8 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
-import { KafkaModule, KafkaAvroResponseDeserializer } from "../../../src";
-import { TestConsumer } from "./test.controller";
+import { KafkaModule, KafkaAvroResponseDeserializer, KafkaAvroRequestSerializer } from "../../../src";
+import { TOPIC_NAME, TestConsumer } from "./test.controller";
+
 
 @Module({
   imports: [
@@ -21,6 +23,18 @@ import { TestConsumer } from "./test.controller";
           },
           deserializer: new KafkaAvroResponseDeserializer({
             host: 'http://localhost:8081/'
+          }),
+          serializer: new KafkaAvroRequestSerializer({
+            config: {
+              host: 'http://localhost:8081/'
+            },
+            schemas: [
+              {
+                topic: TOPIC_NAME,
+                // key: join(__dirname, 'key-schema.avsc'),
+                value: join(__dirname, 'value-schema.avsc')
+              }
+            ],
           }),
           consumeFromBeginning: true
         }

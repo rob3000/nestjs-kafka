@@ -2,5 +2,7 @@ src/
 tsconfig.json
 .github/
 .gitignore
+.prettierrc
 kafka/
-babel.config.js
+.babelrc
+test/

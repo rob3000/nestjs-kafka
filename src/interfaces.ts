@@ -1,9 +1,9 @@
 import { Deserializer, Serializer } from "@nestjs/microservices";
-import { ConsumerConfig, KafkaConfig, ProducerConfig } from "kafkajs";
+import { ConsumerConfig, KafkaConfig, ProducerConfig, ProducerRecord, Message } from "kafkajs";
 
 export interface KafkaResponse<T = any> {
   response: T;
-  id: string;
+  key: string;
   timestamp: string;
   offset: number
 }
@@ -19,4 +19,14 @@ export interface KafkaModuleOption {
     consumeFromBeginning?: boolean;
     seek?: Record<string, string>
   }
+}
+
+export interface KafkaMessageObject extends Message {
+  value: any | Buffer | string | null;
+  key: any;
+}
+
+export interface KafkaMessageSend extends Omit<ProducerRecord, 'topic'> {
+  messages: KafkaMessageObject[],
+  topic?: string
 }
