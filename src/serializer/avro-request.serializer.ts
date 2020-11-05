@@ -9,6 +9,8 @@ type KafkaAvroRequestSerializerSchema = {
   topic: string;
   key?: string;
   value: string;
+  keySuffix?: string,
+  valueSuffix?:string,
 }
 
 export type KafkaAvroRequestSerializerConfig = {
@@ -39,7 +41,9 @@ export class KafkaAvroRequestSerializer
         
         const a = {
           key: keySchema,
-          value: valueSchema
+          value: valueSchema,
+          keySuffix: obj.keySuffix?obj.keySuffix:'Key',
+          valueSuffix: obj.valueSuffix?obj.valueSuffix:'Value',
         }
         
         this.schemas.set(obj.topic, a);
@@ -51,11 +55,11 @@ export class KafkaAvroRequestSerializer
       const outgoingMessage = value;
 
       try {
-        const schemas = this.schemas.get(value.topic);
+        const schema = this.schemas.get(value.topic);
 
         // @todo - need to work out a way to better get the schema based on topic.
-        const keyId = await this.registry.getLatestSchemaId(value.topic + '-Key')
-        const valueId = await this.registry.getLatestSchemaId(value.topic + '-Value')
+        const keyId = await this.registry.getLatestSchemaId(`${value.topic}-${schema.keySuffix}`)
+        const valueId = await this.registry.getLatestSchemaId(`${value.topic}-${schema.valueSuffix}`)
 
         const messages: Promise<KafkaMessageObject>[] = value.messages.map(async(origMessage) => {
           const encodedValue = await this.registry.encode(valueId, origMessage.value)
