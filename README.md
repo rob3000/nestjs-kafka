@@ -131,7 +131,19 @@ In your `module.ts`:
         },
         deserializer: new KafkaAvroResponseDeserializer({
           host: 'http://localhost:8081'
-        })
+        }),
+        serializer: new KafkaAvroRequestSerializer({
+          config: {
+            host: 'http://localhost:8081/'
+          },
+          schemas: [
+            {
+              topic: 'test.topic,
+              key: join(__dirname, 'key-schema.avsc'),
+              value: join(__dirname, 'value-schema.avsc')
+            }
+          ],
+        }),
       },
     ]),
   ]
@@ -139,9 +151,11 @@ In your `module.ts`:
 })
 ```
 
+See the [e2e test](https://github.com/rob3000/nestjs-kafka/tree/master/test/e2e/app) for example.
 
 ## TODO
 
 * Tests
-* Add Avro schema to outgoing messages.
-* Get avro schema for key, as we are only getting the value.
+
+
+PRs Welcome :heart:
