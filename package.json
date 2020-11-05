@@ -9,7 +9,7 @@
     "test": "jest",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "kafka:start": "docker-compose -f ./kafka/docker-compose.yml up -d",
-    "kafka:stop": "docker-compose -f ./kafka/docker-compose.yml down",
+    "kafka:stop": "docker-compose -f ./kafka/docker-compose.yml down -v",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",

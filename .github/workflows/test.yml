@@ -3,8 +3,7 @@ name: Node.js CI
 on: [push]
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
 
     strategy:
@@ -17,10 +16,26 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm install
+    - run: npm ci
+    - run: npm run lint
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
     - name: Start Docker containers for Zookeeper, Kafka and Schema Registry
       run: npm run kafka:start
     - run: sleep 120
     - run: npm run test:e2e
       env:
         CI: true
+    - run: npm run kafka:stop

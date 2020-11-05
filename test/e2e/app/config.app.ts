@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { KafkaModule, KafkaAvroResponseDeserializer, KafkaAvroRequestSerializer } from "../../../src";
 import { TOPIC_NAME, TestConsumer } from "./test.controller";
 
-
 @Module({
   imports: [
     KafkaModule.register([
@@ -14,8 +13,8 @@ import { TOPIC_NAME, TestConsumer } from "./test.controller";
             clientId: 'test-e2e',
             brokers: ['localhost:9092'],
             retry: {
-              retries: 0,
-              initialRetryTime: 1,
+              retries: 2,
+              initialRetryTime: 30,
             },
           },
           consumer: {
@@ -31,7 +30,7 @@ import { TOPIC_NAME, TestConsumer } from "./test.controller";
             schemas: [
               {
                 topic: TOPIC_NAME,
-                // key: join(__dirname, 'key-schema.avsc'),
+                key: join(__dirname, 'key-schema.avsc'),
                 value: join(__dirname, 'value-schema.avsc')
               }
             ],
