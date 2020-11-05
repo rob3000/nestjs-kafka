@@ -42,8 +42,8 @@ export class KafkaAvroRequestSerializer
         const a = {
           key: keySchema,
           value: valueSchema,
-          keySuffix: obj.keySuffix?obj.keySuffix:'Key',
-          valueSuffix: obj.valueSuffix?obj.valueSuffix:'Value',
+          keySuffix: obj.keySuffix??'Key',
+          valueSuffix: obj.valueSuffix??'Value',
         }
         
         this.schemas.set(obj.topic, a);
