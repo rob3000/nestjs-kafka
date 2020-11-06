@@ -3,7 +3,7 @@ import { Payload } from "@nestjs/microservices";
 import { SubscribeTo, KafkaService } from '../../../src';
 import { KafkaMessageSend } from '../../../src/interfaces'; 
 
-export const TOPIC_NAME = 'test-topic';
+export const TOPIC_NAME = 'test.topic';
 
 export class TestConsumer {
 
@@ -30,7 +30,6 @@ export class TestConsumer {
       ...event, 
       topic: TOPIC_NAME
     }
-
     return await this.client.send(a);
   }
 }

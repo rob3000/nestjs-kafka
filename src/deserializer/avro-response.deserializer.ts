@@ -35,6 +35,7 @@ export class KafkaAvroResponseDeserializer
         const msg = this.fallback.deserialize(message);
         Object.assign(decodeResponse, msg);
       }
+
       return decodeResponse;
     }
 

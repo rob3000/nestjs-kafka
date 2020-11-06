@@ -19,6 +19,7 @@ import { TOPIC_NAME, TestConsumer } from "./test.controller";
           },
           consumer: {
             groupId: 'test-e2e-consumer',
+            allowAutoTopicCreation: true,
           },
           deserializer: new KafkaAvroResponseDeserializer({
             host: 'http://localhost:8081/'

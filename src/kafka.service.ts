@@ -103,7 +103,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     // @todo - rather than have a producerRecord, 
     // most of this can be done when we create the controller.
-    return this.producer.send(serializedPacket);
+    return await this.producer.send(serializedPacket);
   }
 
   /**

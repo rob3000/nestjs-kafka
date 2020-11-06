@@ -31,22 +31,21 @@ export class KafkaAvroRequestSerializer
       this.registry = new SchemaRegistry(options.config);
       // this.separator = options.schemaSeparator || '-';
       let keySchema = null;
-      options.schemas.forEach((obj) => {
-        if (obj.key) {
-          keySchema = readAVSC(obj.key);
+      options.schemas.forEach((schema: KafkaAvroRequestSerializerSchema) => {
+        if (schema.key) {
+          keySchema = readAVSC(schema.key);
         }
-        // test.topic-Value
-        const valueSchema = readAVSC(obj.value);
-        // const valueSubject = valueSchema.namespace + this.separator + valueSchema.name;
-        
+
+        const valueSchema = readAVSC(schema.value);
+
         const schemaObject = {
           key: keySchema,
           value: valueSchema,
-          keySuffix: obj.keySuffix??'Key',
-          valueSuffix: obj.valueSuffix??'Value',
+          keySuffix: schema.keySuffix ?? 'key',
+          valueSuffix: schema.valueSuffix ?? 'value',
         }
         
-        this.schemas.set(obj.topic, schemaObject);
+        this.schemas.set(schema.topic, schemaObject);
       });
 
     }
@@ -62,10 +61,15 @@ export class KafkaAvroRequestSerializer
         const keyId = await this.registry.getLatestSchemaId(`${value.topic}-${schema.keySuffix}`)
         const valueId = await this.registry.getLatestSchemaId(`${value.topic}-${schema.valueSuffix}`)
 
-
         const messages: Promise<KafkaMessageObject>[] = value.messages.map(async(origMessage) => {
-          const encodedValue = await this.registry.encode(valueId, origMessage.value)
-          const encodedKey = await this.registry.encode(keyId, origMessage.key)
+
+          let encodedKey = origMessage.key;
+          const encodedValue = await this.registry.encode(valueId, origMessage.value);
+
+          if (keyId) {
+            encodedKey = await this.registry.encode(keyId, origMessage.key);
+          }
+          
           return {
             ...origMessage,
             value: encodedValue,
@@ -78,6 +82,7 @@ export class KafkaAvroRequestSerializer
       } catch (e) {
         this.logger.error(e);
       }
+
       return outgoingMessage;
     }
 
