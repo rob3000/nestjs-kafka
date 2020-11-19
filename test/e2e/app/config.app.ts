@@ -36,7 +36,10 @@ import { TOPIC_NAME, TestConsumer } from "./test.controller";
               }
             ],
           }),
-          consumeFromBeginning: true
+          consumeFromBeginning: true,
+          seek: {
+            [TOPIC_NAME]: 'earliest'
+          }
         }
       },
     ]),

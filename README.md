@@ -138,7 +138,7 @@ In your `module.ts`:
           },
           schemas: [
             {
-              topic: 'test.topic,
+              topic: 'test.topic',
               key: join(__dirname, 'key-schema.avsc'),
               value: join(__dirname, 'value-schema.avsc')
             }

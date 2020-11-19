@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { Consumer, Kafka, Producer, RecordMetadata } from "kafkajs";
+import { Consumer, Kafka, Producer, RecordMetadata, Admin, SeekEntry } from "kafkajs";
 import { Deserializer, Serializer } from "@nestjs/microservices";
 import { Logger } from "@nestjs/common/services/logger.service";
 import { KafkaLogger } from "@nestjs/microservices/helpers/kafka-logger";
@@ -18,9 +18,12 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private kafka: Kafka;
   private producer: Producer;
   private consumer: Consumer;
+  private admin: Admin;
   private deserializer: Deserializer;
   private serializer: Serializer;
   private options: KafkaModuleOption['options'];
+
+  protected topicOffsets: Map<string, (SeekEntry & { high: string; low: string })[]> = new Map();
   
   protected logger = new Logger(KafkaService.name);
 
@@ -48,6 +51,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     this.consumer = this.kafka.consumer(consumerOptions);
     this.producer = this.kafka.producer(producerConfig);
+    this.admin = this.kafka.admin();
 
     this.initializeDeserializer(options);
     this.initializeSerializer(options);
@@ -56,6 +60,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit(): Promise<void> {
     await this.connect();
+    await this.getTopicOffsets();
     SUBSCRIBER_MAP.forEach((functionRef, topic) => {
       this.subscribe(topic);
     });
@@ -66,14 +71,34 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     await this.disconnect();
   }
 
+  /**
+   * Connect the kafka service.
+   */
   async connect(): Promise<void> {
     await this.producer.connect()
     await this.consumer.connect();
+    await this.admin.connect();
   }
 
+  /**
+   * Disconnects the kafka service.
+   */
   async disconnect(): Promise<void> {
     await this.producer.disconnect();
     await this.consumer.disconnect();
+    await this.admin.disconnect();
+  }
+
+  /**
+   * Gets the high, low and partitions of a topic.
+   */
+  private async getTopicOffsets(): Promise<void> {
+    const topics = SUBSCRIBER_MAP.keys();
+
+    for await (const topic of topics) {
+      const topicOffsets = await this.admin.fetchTopicOffsets(topic);
+      this.topicOffsets.set(topic, topicOffsets);
+    }
   }
 
   /**
@@ -164,13 +189,47 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (this.options.seek !== undefined) {
-      Object.keys(this.options.seek).forEach((topic) => {
+      this.seekTopics();
+    }
+  }
+
+  /**
+   * Seeks to a specific offset defined in the config
+   * or to the lowest value and across all partitions.
+   */
+  private seekTopics(): void {
+    Object.keys(this.options.seek).forEach((topic) => {
+      const topicOffsets = this.topicOffsets.get(topic);
+
+      // this.options.seek[topic] or 'earliest' to find the lowest value.
+      console.log(topicOffsets);
+      const seekPoint = this.options.seek[topic];
+
+      if (topicOffsets.length === 1) {
+        const topicOffset = topicOffsets.shift();
+        const seek = (seekPoint === 'earliest')
+          ? topicOffset.low
+          : String(seekPoint)
+
         this.consumer.seek({
           topic,
-          partition: 0,
-          offset: this.options.seek[topic]
-        })
+          partition: topicOffset.partition,
+          offset: seek
+        });
+        return;
+      }
+
+      topicOffsets.forEach((topicOffset) => {
+        const seek = (seekPoint === 'earliest')
+          ? topicOffset.low
+          : String(seekPoint)
+
+        this.consumer.seek({
+          topic,
+          partition: topicOffset.partition,
+          offset: seek
+        });
       })
-    }
+    })
   }
 }
