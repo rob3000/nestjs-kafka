@@ -87,7 +87,7 @@ export class KafkaAvroRequestSerializer
       } catch (e) {
         this.logger.error('Error serializing', e);
       }
-      console.log(JSON.stringify(outgoingMessage));
+
       return outgoingMessage;
     }
 
