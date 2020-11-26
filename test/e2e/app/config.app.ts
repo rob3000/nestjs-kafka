@@ -1,4 +1,3 @@
-import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { KafkaModule, KafkaAvroResponseDeserializer, KafkaAvroRequestSerializer } from "../../../src";
 import { TOPIC_NAME, TestConsumer } from "./test.controller";
@@ -31,15 +30,11 @@ import { TOPIC_NAME, TestConsumer } from "./test.controller";
             schemas: [
               {
                 topic: TOPIC_NAME,
-                key: join(__dirname, 'key-schema.avsc'),
-                value: join(__dirname, 'value-schema.avsc')
+                key: TOPIC_NAME,
+                value: TOPIC_NAME,
               }
             ],
           }),
-          consumeFromBeginning: true,
-          seek: {
-            [TOPIC_NAME]: 'earliest'
-          }
         }
       },
     ]),

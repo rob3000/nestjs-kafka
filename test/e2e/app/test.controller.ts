@@ -20,7 +20,7 @@ export class TestConsumer {
   }
 
   @SubscribeTo(TOPIC_NAME)
-  async message(@Payload() data: any, key: any): Promise<void> {
+  async message(@Payload() data: any): Promise<void> {
     this.messages.push(data);
   }
 

@@ -96,8 +96,12 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     const topics = SUBSCRIBER_MAP.keys();
 
     for await (const topic of topics) {
-      const topicOffsets = await this.admin.fetchTopicOffsets(topic);
-      this.topicOffsets.set(topic, topicOffsets);
+      try {
+        const topicOffsets = await this.admin.fetchTopicOffsets(topic);
+        this.topicOffsets.set(topic, topicOffsets);
+      } catch (e) {
+        this.logger.error('Error fetching topic offset: ', topic);
+      }
     }
   }
 
@@ -200,9 +204,6 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private seekTopics(): void {
     Object.keys(this.options.seek).forEach((topic) => {
       const topicOffsets = this.topicOffsets.get(topic);
-
-      // this.options.seek[topic] or 'earliest' to find the lowest value.
-      console.log(topicOffsets);
       const seekPoint = this.options.seek[topic];
 
       if (topicOffsets.length === 1) {

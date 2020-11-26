@@ -1,7 +1,6 @@
 import { Serializer } from "@nestjs/microservices";
 import { Logger } from '@nestjs/common/services/logger.service';
-import { ProducerRecord } from "kafkajs";
-import { SchemaRegistry, readAVSC } from "@kafkajs/confluent-schema-registry";
+import { SchemaRegistry } from "@kafkajs/confluent-schema-registry";
 import { SchemaRegistryAPIClientArgs } from "@kafkajs/confluent-schema-registry/dist/api"
 import { KafkaMessageSend, KafkaMessageObject } from "../interfaces";
 
@@ -26,40 +25,46 @@ export class KafkaAvroRequestSerializer
     protected logger = new Logger(KafkaAvroRequestSerializer.name);
     protected schemas = new Map();
     protected separator: string;
+    protected config: KafkaAvroRequestSerializerConfig;
 
     constructor(options: KafkaAvroRequestSerializerConfig) {
       this.registry = new SchemaRegistry(options.config);
-      // this.separator = options.schemaSeparator || '-';
-      let keySchema = null;
-      options.schemas.forEach((schema: KafkaAvroRequestSerializerSchema) => {
-        if (schema.key) {
-          keySchema = readAVSC(schema.key);
-        }
+      this.config = options;
 
-        const valueSchema = readAVSC(schema.value);
+      this.getSchemaIds();
+    }
 
-        const schemaObject = {
-          key: keySchema,
-          value: valueSchema,
-          keySuffix: schema.keySuffix ?? 'key',
-          valueSuffix: schema.valueSuffix ?? 'value',
+    /**
+     * Grab the schemaIds for the registry to cache for serialization.
+     */
+    private async getSchemaIds() {
+      for await (const schema of this.config.schemas.values()) {
+        const keySuffix = schema.keySuffix ?? 'key';
+        const valueSuffix = schema.valueSuffix ?? 'value';
+
+        try {
+          const keyId = await this.registry.getLatestSchemaId(`${schema.topic}-${keySuffix}`) || null;
+          const valueId = await this.registry.getLatestSchemaId(`${schema.topic}-${valueSuffix}`)
+
+          this.schemas.set(schema.topic, {
+            keyId,
+            valueId,
+            keySuffix,
+            valueSuffix,
+          });
+        } catch (e) {
+          this.logger.error('Unable to get schema ID: ', e);
         }
         
-        this.schemas.set(schema.topic, schemaObject);
-      });
-
+      }
     }
 
     async serialize(value: KafkaMessageSend): Promise<KafkaMessageSend> {
       const outgoingMessage = value;
 
       try {
-
         const schema = this.schemas.get(value.topic);
-
-        // @todo - need to work out a way to better get the schema based on topic.
-        const keyId = await this.registry.getLatestSchemaId(`${value.topic}-${schema.keySuffix}`)
-        const valueId = await this.registry.getLatestSchemaId(`${value.topic}-${schema.valueSuffix}`)
+        const {keyId, valueId } = schema;
 
         const messages: Promise<KafkaMessageObject>[] = value.messages.map(async(origMessage) => {
 
@@ -80,9 +85,9 @@ export class KafkaAvroRequestSerializer
         const results = await Promise.all(messages);
         outgoingMessage.messages = results;
       } catch (e) {
-        this.logger.error(e);
+        this.logger.error('Error serializing', e);
       }
-
+      console.log(JSON.stringify(outgoingMessage));
       return outgoingMessage;
     }
 
