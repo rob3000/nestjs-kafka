@@ -188,6 +188,9 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
           await callback.apply(objectRef, [response, key, offset, timestamp, partition]);
         } catch(e) {
           this.logger.error(`Error for message ${topic}: ${e}`);
+
+          // Log and throw to ensure we don't keep processing the messages when there is an error.
+          throw e;
         }
       },
     });
