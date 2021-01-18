@@ -18,12 +18,19 @@ export type KafkaAvroRequestSerializerConfig = {
   schemaSeparator?: string;
 }
 
+interface KafkaSchemaMap {
+  keyId: number|null;
+  valueId: number;
+  keySuffix: string;
+  valueSuffix: string;
+}
+
 export class KafkaAvroRequestSerializer
   implements Serializer<KafkaMessageSend, Promise<KafkaMessageSend>> {
 
     protected registry: SchemaRegistry;
     protected logger = new Logger(KafkaAvroRequestSerializer.name);
-    protected schemas = new Map();
+    protected schemas: Map<string, KafkaSchemaMap> = new Map();
     protected separator: string;
     protected config: KafkaAvroRequestSerializerConfig;
 
@@ -54,6 +61,7 @@ export class KafkaAvroRequestSerializer
           });
         } catch (e) {
           this.logger.error('Unable to get schema ID: ', e);
+          throw e;
         }
         
       }
@@ -64,7 +72,7 @@ export class KafkaAvroRequestSerializer
 
       try {
         const schema = this.schemas.get(value.topic);
-        const {keyId, valueId } = schema;
+        const { keyId, valueId } = schema;
 
         const messages: Promise<KafkaMessageObject>[] = value.messages.map(async(origMessage) => {
 
@@ -86,6 +94,7 @@ export class KafkaAvroRequestSerializer
         outgoingMessage.messages = results;
       } catch (e) {
         this.logger.error('Error serializing', e);
+        throw e;
       }
 
       return outgoingMessage;
