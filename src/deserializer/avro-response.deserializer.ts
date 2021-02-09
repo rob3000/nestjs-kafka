@@ -28,7 +28,7 @@ export class KafkaAvroResponseDeserializer
 
       try {
         decodeResponse.key = await this.registry.decode(message.key);
-        decodeResponse.response = await this.registry.decode(message.value);
+        decodeResponse.response = (message.value) ? await this.registry.decode(message.value) : message.value;
       } catch (e) {
         this.logger.error(e);
         // Fall back to the normal kafka deserialize.
