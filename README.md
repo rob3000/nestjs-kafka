@@ -14,7 +14,11 @@ Integration of KafkaJS with NestJS to build event driven microservices.
 
 ## Setup
 
-Add the KafkaModule with the settings:
+Import and add the `KafkaModule` to the imports array of the module for which you would like to use Kafka.
+
+### Synchronous Module Initialization
+
+Register the `KafkaModule` synchronous with the `register()` method:
 
 ```javascript
 @Module({
@@ -33,6 +37,41 @@ Add the KafkaModule with the settings:
         }
       },
     ]),
+  ]
+  ...
+})
+
+```
+
+### Asynchronous Module Initialization
+
+Register the `KafkaModule` asynchronous with the `registerAsync()` method:
+
+```javascript
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot(),
+    KafkaModule.registerAsync(['HERO_SERVICE'], {
+            useFactory: async (configService: ConfigService) => {
+                const broker = this.configService.get('broker');
+                return [
+                    {
+                        name: 'HERO_SERVICE',
+                        options: {
+                              clientId: 'hero',
+                              brokers: [broker],
+                            },
+                            consumer: {
+                              groupId: 'hero-consumer'
+                            }
+                        }
+                    }
+                ];
+            },
+            inject: [ConfigService]
+        })
   ]
   ...
 })
