@@ -3,38 +3,53 @@ import { INestMicroservice } from '@nestjs/common';
 import AppModule from './e2e/app/config.app.async';
 import { TestConsumer } from './e2e/app/test.controller';
 import { messages } from './constants';
+import { Utils } from './utils';
 
 describe('AppModule Async (e2e)', () => {
-  let app: INestMicroservice;
-  let controller: TestConsumer;
+    let app: INestMicroservice;
+    let controller: TestConsumer;
 
-  beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+    beforeAll(async () => {
+        jest.setTimeout(10000);
 
-    app = moduleFixture.createNestMicroservice({});
-    app.enableShutdownHooks();
-    await app.listenAsync();
-    
-    controller = await app.resolve(TestConsumer);
-    controller.messages = [];
-  });
+        await Utils.schemaRegistrySetup();
+        
+        const moduleFixture: TestingModule = await Test.createTestingModule({
+            imports: [AppModule]
+        }).compile();
 
-  afterAll(async() => {
-    await app.close();
-  });
+        app = moduleFixture.createNestMicroservice({});
+        app.enableShutdownHooks();
+        await app.listenAsync();
 
-  it("should give kafka some time", done => {
-    setTimeout(done, 4000);
-  });
-
-  it('We can SEND and ACCEPT AVRO messages', async () => {
-    return controller.sendMessage({ messages }).then(() => {
-      expect(controller.messages.length).toBe(messages.length);
-
-      expect(controller.messages[0]).toEqual(messages[0].value);
-      expect(controller.messages[1]).toEqual(messages[1].value);
+        controller = await app.resolve(TestConsumer);
+        controller.messages = [];
     });
-  });
+
+    afterAll(async () => {
+        await app.close();
+    });
+
+    beforeEach(async () => {
+        await Utils.sleep(2000);
+
+        controller = await app.resolve(TestConsumer);
+        controller.messages = [];
+    });
+
+    it('We can SEND and ACCEPT AVRO messages', async () => {
+        await Utils.sleep(2000);
+
+        await controller.sendMessage({ messages });
+
+        let count = 0;
+        while (controller.messages.length < messages.length && count < 4) {
+            await Utils.sleep(1000);
+            count++;
+        }
+
+        expect(controller.messages.length).toBe(messages.length);
+        expect(controller.messages.find((x) => x.id == messages[0].value.id)).toBeDefined();
+        expect(controller.messages.find((x) => x.id == messages[1].value.id)).toBeDefined();
+    });
 });
