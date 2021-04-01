@@ -21,6 +21,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private admin: Admin;
   private deserializer: Deserializer;
   private serializer: Serializer;
+  private autoConnect: boolean;
   private options: KafkaModuleOption['options'];
 
   protected topicOffsets: Map<string, (SeekEntry & { high: string; low: string })[]> = new Map();
@@ -33,7 +34,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     const { 
       client,
       consumer: consumerConfig,
-      producer: producerConfig
+      producer: producerConfig,
     } = options;
 
     this.kafka = new Kafka({
@@ -48,7 +49,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       },
       consumerConfig
     );
-
+    
+    this.autoConnect = options.autoConnect ?? true;
     this.consumer = this.kafka.consumer(consumerOptions);
     this.producer = this.kafka.producer(producerConfig);
     this.admin = this.kafka.admin();
@@ -75,6 +77,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * Connect the kafka service.
    */
   async connect(): Promise<void> {
+    if (!this.autoConnect) {
+      return;
+    }
+
     await this.producer.connect()
     await this.consumer.connect();
     await this.admin.connect();
@@ -178,7 +184,9 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    * Runs the consumer and calls the consumers when a message arrives.
    */
   private bindAllTopicToConsumer(): void {
+    const runConfig = (this.options.consumerRunConfig) ? this.options.consumerRunConfig : {};
     this.consumer.run({
+      ...runConfig,
       eachMessage: async ({ topic, partition, message }) => {
         const objectRef = SUBSCRIBER_OBJECT_MAP.get(topic);
         const callback = SUBSCRIBER_MAP.get(topic);
