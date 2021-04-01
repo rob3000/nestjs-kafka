@@ -217,20 +217,6 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       const topicOffsets = this.topicOffsets.get(topic);
       const seekPoint = this.options.seek[topic];
 
-      if (topicOffsets.length === 1) {
-        const topicOffset = topicOffsets.shift();
-        const seek = (seekPoint === 'earliest')
-          ? topicOffset.low
-          : String(seekPoint)
-
-        this.consumer.seek({
-          topic,
-          partition: topicOffset.partition,
-          offset: seek
-        });
-        return;
-      }
-
       topicOffsets.forEach((topicOffset) => {
         const seek = (seekPoint === 'earliest')
           ? topicOffset.low
