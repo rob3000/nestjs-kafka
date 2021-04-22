@@ -30,11 +30,11 @@
   },
   "homepage": "https://github.com/rob3000/nestjs-kafka#readme",
   "dependencies": {
-    "@kafkajs/confluent-schema-registry": "^1.0.6",
+    "@kafkajs/confluent-schema-registry": "^2.0.1",
     "@nestjs/common": "^7.6.5",
     "@nestjs/core": "^7.4.4",
     "@nestjs/microservices": "^7.4.4",
-    "kafkajs": "^1.13.0",
+    "kafkajs": "^1.15.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.6.3"
   },
