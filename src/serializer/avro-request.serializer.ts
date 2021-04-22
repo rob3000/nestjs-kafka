@@ -16,6 +16,7 @@ export type KafkaAvroRequestSerializerConfig = {
   schemas: KafkaAvroRequestSerializerSchema[],
   config: SchemaRegistryAPIClientArgs;
   schemaSeparator?: string;
+  schemaFetchIntervalSeconds?: number;
 }
 
 interface KafkaSchemaMap {
@@ -33,10 +34,14 @@ export class KafkaAvroRequestSerializer
     protected schemas: Map<string, KafkaSchemaMap> = new Map();
     protected separator: string;
     protected config: KafkaAvroRequestSerializerConfig;
+    private lastSchemaFetchInterval: Map<string, number> = new Map();
 
     constructor(options: KafkaAvroRequestSerializerConfig) {
       this.registry = new SchemaRegistry(options.config);
-      this.config = options;
+      this.config = {
+        schemaFetchIntervalSeconds: 3600,
+        ...options
+      };
 
       this.getSchemaIds();
     }
@@ -44,26 +49,52 @@ export class KafkaAvroRequestSerializer
     /**
      * Grab the schemaIds for the registry to cache for serialization.
      */
-    private async getSchemaIds() {
+    private async getSchemaIds(): Promise<void> {
       for await (const schema of this.config.schemas.values()) {
-        const keySuffix = schema.keySuffix ?? 'key';
-        const valueSuffix = schema.valueSuffix ?? 'value';
+        await this.getSchemaId(schema);
+      }
+    }
 
-        try {
-          const keyId = await this.registry.getLatestSchemaId(`${schema.topic}-${keySuffix}`) || null;
-          const valueId = await this.registry.getLatestSchemaId(`${schema.topic}-${valueSuffix}`)
+    /**
+     * Gets a single schema from schema registry.
+     * 
+     * @param schema 
+     */
+    private async getSchemaId(schema): Promise<void|Error> {
+      const keySuffix = schema.keySuffix ?? 'key';
+      const valueSuffix = schema.valueSuffix ?? 'value';
 
-          this.schemas.set(schema.topic, {
-            keyId,
-            valueId,
-            keySuffix,
-            valueSuffix,
-          });
-        } catch (e) {
-          this.logger.error('Unable to get schema ID: ', e);
-          throw e;
-        }
-        
+      try {
+        const keyId = await this.registry.getLatestSchemaId(`${schema.topic}-${keySuffix}`) || null;
+        const valueId = await this.registry.getLatestSchemaId(`${schema.topic}-${valueSuffix}`)
+
+        this.schemas.set(schema.topic, {
+          keyId,
+          valueId,
+          keySuffix,
+          valueSuffix,
+        });
+
+        this.lastSchemaFetchInterval.set(schema.topic, Date.now())
+      } catch (e) {
+        this.logger.error('Unable to get schema ID: ', e);
+        throw e;
+      }
+    }
+
+    /**
+     * Check the last time we updated the schemas and attempt to update.
+     * 
+     * @param topic 
+     */
+    private async updateSchemas(topic: string): Promise<void> {
+      const lastCheck = this.lastSchemaFetchInterval.get(topic);
+      const configCheckMs = this.config.schemaFetchIntervalSeconds / 1000;
+      const now = Date.now();
+
+      if ((lastCheck + configCheckMs) > now) {
+        const config = this.config.schemas.find((schema) => schema.topic === topic);
+        await this.getSchemaId(config);
       }
     }
 
@@ -71,6 +102,8 @@ export class KafkaAvroRequestSerializer
       const outgoingMessage = value;
 
       try {
+        await this.updateSchemas(value.topic);
+
         const schema = this.schemas.get(value.topic);
         const { keyId, valueId } = schema;
 
