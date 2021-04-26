@@ -7,7 +7,7 @@ import { KafkaMessageSend, KafkaMessageObject } from "../interfaces";
 type KafkaAvroRequestSerializerSchema = {
   topic: string;
   key?: string;
-  value: string;
+  value?: string;
   keySuffix?: string,
   valueSuffix?:string,
 }
