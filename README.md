@@ -107,7 +107,7 @@ export class Consumer {
   }
 
   @SubscribeTo('hero.kill.dragon')
-  async getWorld(@Payload() data: KafkaMessage): Promise<void> {
+  async getWorld(data: any, key: any, offset: number, timestamp: number): Promise<void> {
     ...
   }
 
