@@ -34,13 +34,13 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private options: KafkaModuleOption['options'];
 
   protected topicOffsets: Map<string, (SeekEntry & { high: string; low: string })[]> = new Map();
-
+  
   protected logger = new Logger(KafkaService.name);
 
   constructor(
     options: KafkaModuleOption['options']
   ) {
-    const {
+    const { 
       client,
       consumer: consumerConfig,
       producer: producerConfig,
@@ -58,7 +58,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       },
       consumerConfig
     );
-
+    
     this.autoConnect = options.autoConnect ?? true;
     this.consumer = this.kafka.consumer(consumerOptions);
     this.producer = this.kafka.producer(producerConfig);
@@ -122,8 +122,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Subscribes to the topics.
-   *
-   * @param topic
+   * 
+   * @param topic 
    */
   private async subscribe(topic: string): Promise<void> {
     await this.consumer.subscribe({
@@ -131,11 +131,11 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       fromBeginning: this.options.consumeFromBeginning || false
     });
   }
-
+  
   /**
    * Send/produce a message to a topic.
-   *
-   * @param message
+   * 
+   * @param message 
    */
   async send(message: KafkaMessageSend): Promise<RecordMetadata[]> {
     if (!this.producer) {
@@ -152,8 +152,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Gets the groupId suffix for the consumer.
-   *
-   * @param groupId
+   * 
+   * @param groupId 
    */
   public getGroupIdSuffix(groupId: string): string {
     return groupId + '-client';
@@ -161,10 +161,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Calls the method you are subscribed to.
-   *
+   * 
    * @param topic
    *  The topic to subscribe to.
-   * @param instance
+   * @param instance 
    *  The class instance.
    */
   subscribeToResponseOf<T>(topic: string, instance: T): void {
@@ -217,8 +217,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Sets up the serializer to encode outgoing messages.
-   *
-   * @param options
+   * 
+   * @param options 
    */
   protected initializeSerializer(options: KafkaModuleOption['options']): void {
     this.serializer = (options && options.serializer) || new KafkaRequestSerializer();
@@ -226,8 +226,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Sets up the deserializer to decode incoming messages.
-   *
-   * @param options
+   * 
+   * @param options 
    */
   protected initializeDeserializer(options: KafkaModuleOption['options']): void {
     this.deserializer = (options && options.deserializer) || new KafkaResponseDeserializer();
