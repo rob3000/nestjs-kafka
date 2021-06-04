@@ -1,6 +1,16 @@
 import { Deserializer, Serializer } from '@nestjs/microservices';
-import { ConsumerConfig, KafkaConfig, ProducerConfig, ProducerRecord, Message, ConsumerRunConfig } from 'kafkajs';
+import {
+  ConsumerConfig,
+  KafkaConfig,
+  ProducerConfig,
+  ProducerRecord,
+  Message,
+  ConsumerRunConfig,
+  Transaction,
+  RecordMetadata,
+} from 'kafkajs';
 import { ModuleMetadata, Type } from '@nestjs/common';
+
 export interface KafkaResponse<T = any> {
   response: T;
   key: string;
@@ -40,4 +50,7 @@ export interface KafkaModuleOptionsAsync
 }
 export interface KafkaOptionsFactory {
   creatKafkaModuleOptions(): Promise<KafkaModuleOption[]> | KafkaModuleOption[];
+}
+export interface KafkaTransaction extends Omit<Transaction, 'send' | 'sendBatch'> {
+  send(message: KafkaMessageSend): Promise<RecordMetadata[]>
 }
