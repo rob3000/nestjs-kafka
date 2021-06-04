@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common/services/logger.service';
 import { KafkaResponse } from "../interfaces";
 import { SchemaRegistry } from "@kafkajs/confluent-schema-registry";
 import { SchemaRegistryAPIClientArgs } from "@kafkajs/confluent-schema-registry/dist/api"
+import { SchemaRegistryAPIClientOptions } from "@kafkajs/confluent-schema-registry/dist/@types";
 import { KafkaResponseDeserializer } from "./kafka-response.deserializer";
 
 export class KafkaAvroResponseDeserializer
@@ -12,8 +13,8 @@ export class KafkaAvroResponseDeserializer
     protected logger = new Logger(KafkaAvroResponseDeserializer.name);
     protected fallback: KafkaResponseDeserializer;
 
-    constructor(config: SchemaRegistryAPIClientArgs) {
-      this.registry = new SchemaRegistry(config);
+    constructor(config: SchemaRegistryAPIClientArgs, options?: SchemaRegistryAPIClientOptions) {
+      this.registry = new SchemaRegistry(config, options);
       this.fallback = new KafkaResponseDeserializer()
     }
 

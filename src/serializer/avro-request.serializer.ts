@@ -2,6 +2,8 @@ import { Serializer } from "@nestjs/microservices";
 import { Logger } from '@nestjs/common/services/logger.service';
 import { SchemaRegistry } from "@kafkajs/confluent-schema-registry";
 import { SchemaRegistryAPIClientArgs } from "@kafkajs/confluent-schema-registry/dist/api"
+import { SchemaRegistryAPIClientOptions } from "@kafkajs/confluent-schema-registry/dist/@types";
+
 import { KafkaMessageSend, KafkaMessageObject } from "../interfaces";
 
 type KafkaAvroRequestSerializerSchema = {
@@ -15,6 +17,7 @@ type KafkaAvroRequestSerializerSchema = {
 export type KafkaAvroRequestSerializerConfig = {
   schemas: KafkaAvroRequestSerializerSchema[],
   config: SchemaRegistryAPIClientArgs;
+  options: SchemaRegistryAPIClientOptions;
   schemaSeparator?: string;
   schemaFetchIntervalSeconds?: number;
 }
@@ -37,7 +40,7 @@ export class KafkaAvroRequestSerializer
     private lastSchemaFetchInterval: Map<string, number> = new Map();
 
     constructor(options: KafkaAvroRequestSerializerConfig) {
-      this.registry = new SchemaRegistry(options.config);
+      this.registry = new SchemaRegistry(options.config, options.options);
       this.config = {
         schemaFetchIntervalSeconds: 3600,
         ...options

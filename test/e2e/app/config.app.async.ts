@@ -25,12 +25,22 @@ import { TOPIC_NAME, TestConsumer } from './test.controller';
                 groupId: 'test-e2e-consumer',
                 allowAutoTopicCreation: true,
               },
-              deserializer: new KafkaAvroResponseDeserializer({
-                host: testConfigService.getAvroHost(),
-              }),
-              serializer: new KafkaAvroRequestSerializer({
+              deserializer: {
+                type: KafkaAvroResponseDeserializer,
                 config: {
                   host: testConfigService.getAvroHost(),
+                },
+                options: {
+
+                }
+              },
+              serializer: {
+                type: KafkaAvroRequestSerializer,
+                config: {
+                  host: testConfigService.getAvroHost(),
+                },
+                options: {
+
                 },
                 schemas: [
                   {
@@ -39,7 +49,7 @@ import { TOPIC_NAME, TestConsumer } from './test.controller';
                     value: TOPIC_NAME,
                   },
                 ],
-              }),
+              }
             },
           },
         ];
