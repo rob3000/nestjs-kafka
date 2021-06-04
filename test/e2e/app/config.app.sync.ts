@@ -35,6 +35,9 @@ import { TOPIC_NAME, TestConsumer } from "./test.controller";
               }
             ],
           }),
+          seek: {
+            [TOPIC_NAME]: new Date('2020-05-21')
+          }
         }
       },
     ]),

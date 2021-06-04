@@ -218,9 +218,18 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       const seekPoint = this.options.seek[topic];
 
       topicOffsets.forEach((topicOffset) => {
-        const seek = (seekPoint === 'earliest')
-          ? topicOffset.low
-          : String(seekPoint)
+        let seek = String(seekPoint);
+
+        // Seek by timestamp
+        if (typeof seekPoint == 'object') {
+          const time = seekPoint as Date;
+          seek = time.getTime().toString();
+        }
+
+        // Seek to the earliest timestamp.
+        if (seekPoint === 'earliest') {
+          seek = topicOffset.low;
+        }
 
         this.consumer.seek({
           topic,

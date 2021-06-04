@@ -17,7 +17,7 @@ export interface KafkaModuleOption {
     deserializer?: Deserializer;
     serializer?: Serializer;
     consumeFromBeginning?: boolean;
-    seek?: Record<string, number | 'earliest'>;
+    seek?: Record<string, number | 'earliest' | Date>;
     autoConnect?: boolean
   };
 }
