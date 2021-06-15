@@ -1,11 +1,20 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { Consumer, Kafka, Producer, RecordMetadata, Admin, SeekEntry } from "kafkajs";
+import {
+  Consumer,
+  Kafka,
+  Producer,
+  RecordMetadata,
+  Admin,
+  SeekEntry,
+  TopicPartitionOffsetAndMetadata,
+  Offsets,
+} from 'kafkajs';
 import { Deserializer, Serializer } from "@nestjs/microservices";
 import { Logger } from "@nestjs/common/services/logger.service";
 import { KafkaLogger } from "@nestjs/microservices/helpers/kafka-logger";
 import { KafkaResponseDeserializer } from "./deserializer/kafka-response.deserializer";
 import { KafkaRequestSerializer } from "./serializer/kafka-request.serializer";
-import { KafkaModuleOption, KafkaMessageSend } from "./interfaces";
+import { KafkaModuleOption, KafkaMessageSend, KafkaTransaction } from './interfaces';
 
 import {
   SUBSCRIBER_MAP,
@@ -160,6 +169,50 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
    */
   subscribeToResponseOf<T>(topic: string, instance: T): void {
     SUBSCRIBER_OBJECT_MAP.set(topic, instance);
+  }
+
+  /**
+   * Returns a new producer transaction in order to produce messages and commit offsets together
+   */
+  async transaction(): Promise<KafkaTransaction> {
+    const producer = this.producer;
+    if (!producer) {
+      const msg = 'There is no producer, unable to start transactions.';
+      this.logger.error(msg);
+      throw msg;
+    }
+
+    const tx = await producer.transaction();
+    const retval: KafkaTransaction = {
+      abort(): Promise<void> {
+        return tx.abort();
+      },
+      commit(): Promise<void> {
+        return tx.commit();
+      },
+      isActive(): boolean {
+        return tx.isActive();
+      },
+      async send(message: KafkaMessageSend): Promise<RecordMetadata[]> {
+        const serializedPacket = await this.serializer.serialize(message);
+        return await tx.send(serializedPacket);
+      },
+      sendOffsets(offsets: Offsets & { consumerGroupId: string }): Promise<void> {
+        return tx.sendOffsets(offsets);
+      },
+    };
+    return retval;
+  }
+
+  /**
+   * Commit consumer offsets manually.
+   * Please note that in most cases you will want to use the given __autoCommitThreshold__
+   * or use a transaction to atomically set offsets and outgoing messages.
+   *
+   * @param topicPartitions
+   */
+  async commitOffsets(topicPartitions: Array<TopicPartitionOffsetAndMetadata>): Promise<void> {
+    return this.consumer.commitOffsets(topicPartitions);
   }
 
   /**
