@@ -5,11 +5,12 @@ import {
   isString,
   isUndefined,
 } from '@nestjs/common/utils/shared.utils';
-import { Serializer } from "@nestjs/microservices";
+import { Serializer } from '@nestjs/microservices';
 
 export interface KafkaRequest<T = any> {
   key: Buffer | string | null;
   value: T;
+  topic: string;
   headers: Record<string, any>;
 }
 
