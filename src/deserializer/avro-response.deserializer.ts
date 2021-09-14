@@ -28,7 +28,7 @@ export class KafkaAvroResponseDeserializer
       }
 
       try {
-        decodeResponse.key = (message.key.length > 0) ? await this.registry.decode(message.key) : message.key;
+        decodeResponse.key = (message.key?.length > 0) ? await this.registry.decode(message.key) : null;
         decodeResponse.response = (message.value) ? await this.registry.decode(message.value) : message.value;
       } catch (e) {
         this.logger.error(e);
