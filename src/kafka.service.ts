@@ -245,8 +245,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         const callback = SUBSCRIBER_MAP.get(topic);
 
         try {
-          const { timestamp, response, offset, key } = await this.deserializer.deserialize(message, { topic });
-          await callback.apply(objectRef, [response, key, offset, timestamp, partition]);
+          const { timestamp, response, offset, key, headers } = await this.deserializer.deserialize(message, { topic });
+          await callback.apply(objectRef, [response, key, offset, timestamp, partition, headers]);
         } catch(e) {
           this.logger.error(`Error for message ${topic}: ${e}`);
 
