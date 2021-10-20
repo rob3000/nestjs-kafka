@@ -11,11 +11,15 @@ import {
 } from 'kafkajs';
 import { ModuleMetadata, Type } from '@nestjs/common';
 
+export interface IHeaders {
+  [key: string]: any;
+}
 export interface KafkaResponse<T = any> {
   response: T;
   key: string;
   timestamp: string;
   offset: number;
+  headers?: IHeaders;
 }
 export interface KafkaModuleOption {
   name: string;
@@ -28,7 +32,7 @@ export interface KafkaModuleOption {
     serializer?: Serializer;
     consumeFromBeginning?: boolean;
     seek?: Record<string, number | 'earliest' | Date>;
-    autoConnect?: boolean
+    autoConnect?: boolean;
   };
 }
 export interface KafkaMessageObject extends Message {
@@ -51,6 +55,7 @@ export interface KafkaModuleOptionsAsync
 export interface KafkaOptionsFactory {
   creatKafkaModuleOptions(): Promise<KafkaModuleOption[]> | KafkaModuleOption[];
 }
-export interface KafkaTransaction extends Omit<Transaction, 'send' | 'sendBatch'> {
-  send(message: KafkaMessageSend): Promise<RecordMetadata[]>
+export interface KafkaTransaction
+  extends Omit<Transaction, 'send' | 'sendBatch'> {
+  send(message: KafkaMessageSend): Promise<RecordMetadata[]>;
 }

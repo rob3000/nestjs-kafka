@@ -107,7 +107,7 @@ export class Consumer {
   }
 
   @SubscribeTo('hero.kill.dragon')
-  async getWorld(data: any, key: any, offset: number, timestamp: number): Promise<void> {
+  async getWorld(data: any, key: any, offset: number, timestamp: number, partition: number, headers: IHeaders): Promise<void> {
     ...
   }
 
